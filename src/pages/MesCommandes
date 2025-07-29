@@ -1,0 +1,79 @@
+// src/pages/MesCommandes.js
+import React, { useEffect, useState, useContext } from 'react';
+import axios from 'axios';
+import { AuthContext } from '../AuthContext';
+import { useNavigate } from 'react-router-dom';
+
+export default function MesCommandes() {
+  const { user } = useContext(AuthContext);
+  const [commandes, setCommandes] = useState([]);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+
+    axios.get('http://localhost:5000/api/commandes')
+      .then(res => {
+        // Filtrer les commandes de l'utilisateur connecté
+        const mesCommandes = res.data.filter(c => c.user_id === user.id);
+        setCommandes(mesCommandes);
+      })
+      .catch(err => {
+        console.error('❌ Erreur récupération commandes:', err);
+      });
+  }, [user, navigate]);
+
+  const styles = {
+    container: {
+      padding: '2rem',
+      fontFamily: 'Arial',
+    },
+    commande: {
+      border: '1px solid #ccc',
+      borderRadius: '6px',
+      padding: '1rem',
+      marginBottom: '2rem',
+      backgroundColor: '#f9f9f9',
+    },
+    titre: {
+      fontSize: '1.2rem',
+      fontWeight: 'bold',
+      marginBottom: '0.5rem',
+    },
+    detail: {
+      marginLeft: '1rem',
+      fontSize: '0.95rem',
+    },
+    statut: {
+      fontStyle: 'italic',
+      marginTop: '0.5rem',
+    },
+  };
+
+  return (
+    <div style={styles.container}>
+      <h2>Mes Commandes</h2>
+      {commandes.length === 0 ? (
+        <p>Vous n'avez encore passé aucune commande.</p>
+      ) : (
+        commandes.map((commande, index) => (
+          <div key={index} style={styles.commande}>
+            <div style={styles.titre}>Commande #{commande.id} - {new Date(commande.date_commande).toLocaleDateString()}</div>
+            {commande.details.map((produit, i) => (
+              <div key={i} style={styles.detail}>
+                <p>🧱 <strong>{produit.produit_nom}</strong></p>
+                <p>📏 Dimensions : {produit.longueur_cm}cm x {produit.largeur_cm}cm</p>
+                <p>📦 Quantité : {produit.quantite}</p>
+                <p>💰 Prix total : {produit.prix_total} DT</p>
+              </div>
+            ))}
+            <div style={styles.statut}>Statut : {commande.statut || 'en attente'}</div>
+          </div>
+        ))
+      )}
+    </div>
+  );
+}

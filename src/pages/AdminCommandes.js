@@ -147,6 +147,8 @@ const AdminCommandes = () => {
                   onChange={(e) => updateStatut(commande.id, e.target.value)}
                   style={styles.select}
                 >
+                  <option value="en attente">En attente</option>
+                  <option value="acceptée">Rejetée</option>
                   <option value="acceptée">Acceptée</option>
                   <option value="préparation">Préparation</option>
                   <option value="prête">Prête</option>
@@ -161,15 +163,21 @@ const AdminCommandes = () => {
             </div>
 
             <div style={styles.details}>
-              <h4>Détails :</h4>
-              <ul>
-                {commande.details.map((d, i) => (
-                  <li key={i}>
-                    {d.produit_nom} — {d.longueur_cm}×{d.largeur_cm}cm — {d.quantite} pièce(s) — Total : {d.prix_total} DT
-                  </li>
-                ))}
-              </ul>
-            </div>
+  <h4>Détails :</h4>
+  <ul>
+    {commande.details.map((d, i) => (
+      <li key={i}>
+        {d.produit_nom} — {d.longueur_cm}×{d.largeur_cm}cm — {d.quantite} pièce(s) — Total : {d.prix_total} DT
+      </li>
+    ))}
+  </ul>
+
+  {/* ✅ Ajout du prix total de toute la commande */}
+  <p><strong>💰 Prix total de la commande :</strong> {
+  commande.details.reduce((sum, d) => sum + Number(d.prix_total), 0).toFixed(2)
+} DT</p>
+</div>
+
           </div>
         ))
       )}

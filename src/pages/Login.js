@@ -1,41 +1,49 @@
+// src/pages/Login.js
 import React, { useState, useContext } from 'react';
 import { AuthContext } from '../AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 export default function Login() {
   const [form, setForm] = useState({ email: '', mot_de_passe: '' });
+  const [error, setError] = useState('');
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Page à rediriger après login (optionnel)
+  const from = location.state?.from || '/';
 
   const handleChange = e =>
     setForm({ ...form, [e.target.name]: e.target.value });
 
   async function handleSubmit(e) {
-  e.preventDefault();
-  try {
-    const res = await fetch('http://localhost:5000/api/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form),
-    });
-    const data = await res.json();
-    if (res.ok) {
-      login(data.token, data.user);
+    e.preventDefault();
+    setError('');
 
-      // 👇 Redirection selon rôle (ou adapte selon ton champ)
-      if (data.user.role === 'admin') {
-        navigate('/admin/produits');
+    try {
+      const res = await fetch('http://localhost:5000/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        login(data.token, data.user);
+
+        // 🔹 Redirection selon rôle
+        if (data.user.role === 'admin') {
+          navigate('/admin/produits', { replace: true }); // admin → page admin
+        } else {
+          navigate('/', { replace: true }); // client → page home
+        }
       } else {
-        navigate('/home');  // client → page d'accueil
+        setError(data.msg || 'Email ou mot de passe incorrect');
       }
-    } else {
-      alert(data.msg);
+    } catch {
+      setError('Erreur lors de la connexion');
     }
-  } catch {
-    alert('Erreur login');
   }
-}
-
 
   const styles = {
     page: {
@@ -47,16 +55,8 @@ export default function Login() {
       justifyContent: 'center',
       fontFamily: 'sans-serif',
     },
-    title: {
-      fontSize: 36,
-      fontWeight: 'bold',
-      marginBottom: 8,
-    },
-    subtitle: {
-      fontSize: 24,
-      fontWeight: 'bold',
-      marginBottom: 32,
-    },
+    title: { fontSize: 36, fontWeight: 'bold', marginBottom: 8 },
+    subtitle: { fontSize: 24, fontWeight: 'bold', marginBottom: 32 },
     card: {
       backgroundColor: 'white',
       padding: '32px 24px',
@@ -65,17 +65,10 @@ export default function Login() {
       width: '90%',
       maxWidth: 400,
     },
-    input: {
-      width: '100%',
-      padding: '12px',
-      fontSize: 16,
-      marginBottom: 16,
-      borderRadius: 8,
-      border: '1px solid #ccc',
-    },
+    input: { width: '100%', padding: 12, fontSize: 16, marginBottom: 16, borderRadius: 8, border: '1px solid #ccc' },
     button: {
       width: '100%',
-      padding: '12px',
+      padding: 12,
       fontSize: 16,
       backgroundColor: '#111111',
       color: 'white',
@@ -85,15 +78,9 @@ export default function Login() {
       cursor: 'pointer',
       marginBottom: 16,
     },
-    footerText: {
-      textAlign: 'center',
-      fontSize: 14,
-    },
-    link: {
-      fontWeight: 'bold',
-      marginLeft: 4,
-      cursor: 'pointer',
-    },
+    error: { backgroundColor: '#fdd', color: '#900', padding: 10, borderRadius: 6, marginBottom: 10, textAlign: 'center' },
+    footerText: { textAlign: 'center', fontSize: 14 },
+    link: { fontWeight: 'bold', marginLeft: 4, cursor: 'pointer' },
   };
 
   return (
@@ -101,6 +88,7 @@ export default function Login() {
       <h1 style={styles.title}>Marbre</h1>
       <h2 style={styles.subtitle}>Authentification</h2>
       <form style={styles.card} onSubmit={handleSubmit}>
+        {error && <div style={styles.error}>{error}</div>}
         <input
           style={styles.input}
           name="email"
@@ -124,10 +112,7 @@ export default function Login() {
         </button>
         <div style={styles.footerText}>
           Première visite?
-          <span
-            style={styles.link}
-            onClick={() => navigate('/register')}
-          >
+          <span style={styles.link} onClick={() => navigate('/signup')}>
             Créer un compte
           </span>
         </div>

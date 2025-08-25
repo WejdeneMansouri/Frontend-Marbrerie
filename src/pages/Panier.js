@@ -1,174 +1,167 @@
+// src/pages/Panier.js
 import React, { useEffect, useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../AuthContext';
 
 export default function Panier() {
   const [panier, setPanier] = useState([]);
-  const { user, token } = useContext(AuthContext);
+  const { user } = useContext(AuthContext);
   const navigate = useNavigate();
 
+  // Charger le panier et initialiser quantité commandée
   useEffect(() => {
     const stored = JSON.parse(localStorage.getItem('panier')) || [];
-    setPanier(stored);
+    const withQuantity = stored.map(p => ({
+      ...p,
+      quantiteCommandee: p.quantiteCommandee || 1,
+      largeur: p.largeur || 1,
+      hauteur: p.hauteur || 1
+    }));
+    setPanier(withQuantity);
   }, []);
 
+  // Modifier largeur, hauteur ou quantité commandée
+  const handleChange = (index, field, value) => {
+    const updated = [...panier];
+    updated[index][field] = Number(value);
+    setPanier(updated);
+    localStorage.setItem('panier', JSON.stringify(updated));
+  };
+
+  // Supprimer un article
   const supprimerArticle = (indexToRemove) => {
     const updatedPanier = panier.filter((_, index) => index !== indexToRemove);
     setPanier(updatedPanier);
     localStorage.setItem('panier', JSON.stringify(updatedPanier));
   };
 
- const passerCommande = async () => {
-  if (!user || !token) {
-    navigate('/login', { state: { from: '/panier' } }); // <== Redirection avec retour
-    return;
-  }
-
-  try {
-    const response = await fetch('http://localhost:5000/api/commandes', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`
-      },
-      body: JSON.stringify({
-        user_id: user.id,
-        produits: panier.map(p => ({
-          produit_id: p.id,
-          longueur_cm: 100,
-          largeur_cm: 100,
-          quantite: 1,
-          prix_total: p.prix_m2
-        }))
-      })
-    });
-
-    if (response.ok) {
-      alert('✅ Commande envoyée !');
-      localStorage.removeItem('panier');
-      setPanier([]);
-      // navigate('/confirmation');
-    } else {
-      alert('❌ Erreur lors de la commande');
+  // Passer la commande
+  const passerCommande = () => {
+    if (!user) {
+      navigate('/login', { state: { from: '/panier' } });
+      return;
     }
-  } catch (error) {
-    console.error('Erreur commande:', error);
-  }
-};
+    navigate('/paiement');
+  };
 
+  // Prix total
+  const prixTotalCommande = panier.reduce((acc, p) => acc + p.largeur * p.hauteur * p.prix_m2 * p.quantiteCommandee, 0);
 
   const styles = {
-    background: {
-      backgroundImage: 'url("/images/11.png")',
-      backgroundSize: 'cover',
-      backgroundRepeat: 'no-repeat',
-      backgroundPosition: 'center',
-      minHeight: '100vh',
+    container: {
       padding: '20px',
       fontFamily: 'Arial, sans-serif',
+      minHeight: '100vh',
+      backgroundImage: 'url("/images/11.png")',
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      color: '#222',
     },
-    overlay: {
-      backgroundColor: 'rgba(255, 255, 255, 0.9)',
-      padding: '20px',
-      borderRadius: '12px',
-    },
-    title: {
-      textAlign: 'center',
-      fontSize: '2.5rem',
-      fontWeight: 'bold',
+    nav: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
       marginBottom: '20px',
+      padding: '0 10px',
     },
-    grid: {
-      display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-      gap: '20px',
-    },
+    links: { display: 'flex', gap: '1.5rem', fontWeight: 'bold', cursor: 'pointer', fontSize: '1rem' },
+    loginBtn: { padding: '6px 14px', border: '1px solid #111', borderRadius: '5px', backgroundColor: 'white', cursor: 'pointer', fontWeight: 'bold' },
     card: {
-      border: '0.5px solid #ccc',
-      borderRadius: '4px',
-      padding: '15px',
-      background: '#fff',
-      textAlign: 'center',
       position: 'relative',
+      border: '1px solid #ddd',
+      borderRadius: '10px',
+      padding: '15px',
+      marginBottom: '15px',
+      backgroundColor: 'rgba(255,255,255,0.95)',
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: '15px',
+      transition: 'box-shadow 0.2s',
+      boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
     },
-    image: {
-      width: '100%',
-      height: '200px',
-      objectFit: 'cover',
-      borderRadius: '6px',
-    },
-    supprimerBtn: {
-      position: 'absolute',
-      top: '10px',
-      right: '10px',
-      background: '#f44336',
-      color: 'white',
-      border: 'none',
-      borderRadius: '50%',
-      width: '28px',
-      height: '28px',
-      cursor: 'pointer',
-      fontWeight: 'bold',
-    },
-    btnCommander: {
-      marginTop: '30px',
-      display: 'block',
-      marginLeft: 'auto',
-      marginRight: 'auto',
-      padding: '12px 25px',
-      background: '#000',
-      color: '#fff',
-      fontSize: '16px',
-      border: 'none',
-      borderRadius: '6px',
-      cursor: 'pointer',
-    },
-    btnRetour: {
-      marginTop: '15px',
-      display: 'block',
-      marginLeft: 'auto',
-      marginRight: 'auto',
-      padding: '12px 25px',
-      background: '#fff',
-      color: '#000',
-      fontSize: '16px',
-      border: '1px solid black',
-      borderRadius: '6px',
-      cursor: 'pointer',
-    }
+    img: { width: '120px', height: '80px', objectFit: 'cover', borderRadius: '6px' },
+    info: { display: 'flex', flexDirection: 'column', gap: '4px', flexGrow: 1 },
+    input: { width: '60px', margin: '2px 0', padding: '4px', borderRadius: '5px', border: '1px solid #ccc', textAlign: 'center' },
+    button: { padding: '10px 20px', backgroundColor: '#111', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold', marginTop: '10px', marginRight: '10px' },
+    supprimerBtn: { backgroundColor: '#f44336', color: 'white', border: 'none', borderRadius: '50%', width: '28px', height: '28px', cursor: 'pointer', fontWeight: 'bold', position: 'absolute', top: '8px', right: '8px' },
+    h2: { textAlign: 'center', marginBottom: '15px', fontSize: '1.8rem', color: '#111' },
+    total: { textAlign: 'right', fontSize: '1.2rem', fontWeight: 'bold', marginTop: '10px', color: '#111' },
   };
 
   return (
-    <div style={styles.background}>
-      <div style={styles.overlay}>
-        <div style={styles.title}>Votre panier</div>
-        {panier.length === 0 ? (
-          <p style={{ textAlign: 'center' }}>🛒 Aucun article dans le panier</p>
-        ) : (
-          <>
-            <div style={styles.grid}>
-              {panier.map((p, index) => (
-                <div style={styles.card} key={index}>
-                  <button style={styles.supprimerBtn} onClick={() => supprimerArticle(index)}>×</button>
-                  <img src={p.image_url} alt={p.nom} style={styles.image} />
-                  <h3>{p.nom}</h3>
-                  <p>{p.prix_m2} €</p>
-                </div>
-              ))}
-            </div>
+    <div style={styles.container}>
+      <div style={styles.nav}>
+        <div style={styles.links}>
+          <span onClick={() => navigate('/home')}>Home</span>
+          <span onClick={() => navigate('/acceuil')}>Produits</span>
+          <span onClick={() => navigate('/mes-commandes')}>Mes commandes</span>
+                    <span style={{ cursor: 'pointer' }} onClick={() => navigate('/Apropos')}>À propos</span>
 
-            {/* Passer la commande */}
-            <button style={styles.btnCommander} onClick={passerCommande}>
-              Passer la commande
-            </button>
-
-            {/* Retour au shop */}
-            <button style={styles.btnRetour} onClick={() => navigate('/acceuil')}>
-              Continuer mes achats
-            </button>
-          </>
-        )}
+        </div>
+        <div>
+          <button style={styles.loginBtn} onClick={() => navigate('/panier')}>Panier</button>
+        </div>
       </div>
+
+      <h2>Votre panier</h2>
+
+      {panier.length === 0 ? (
+        <p>🛒 Aucun article dans le panier</p>
+      ) : (
+        <div>
+          {panier.map((p, index) => {
+            const surface = p.largeur * p.hauteur;
+            const prixTotal = surface * p.prix_m2 * p.quantiteCommandee;
+
+            return (
+              <div style={styles.card} key={index}>
+                <button style={styles.supprimerBtn} onClick={() => supprimerArticle(index)}>×</button>
+                <img src={p.image_url} alt={p.nom} style={styles.img} />
+                <div style={styles.info}>
+                  <h3>{p.nom}</h3>
+                  <p>Prix/m² : {p.prix_m2} €</p>
+
+                  <div>
+                    <label>
+                      Quantité :
+                      <input
+                        type="number"
+                        min="1"
+                        value={p.quantiteCommandee}
+                        onChange={(e) => handleChange(index, 'quantiteCommandee', e.target.value)}
+                        style={styles.input}
+                      />
+                    </label>
+                  </div>
+
+                  <div>
+                    <label>
+                      Largeur (m):
+                      <input type="number" min="1" value={p.largeur} onChange={(e) => handleChange(index, 'largeur', e.target.value)} style={styles.input} />
+                    </label>
+                  </div>
+                  <div>
+                    <label>
+                      Hauteur (m):
+                      <input type="number" min="1" value={p.hauteur} onChange={(e) => handleChange(index, 'hauteur', e.target.value)} style={styles.input} />
+                    </label>
+                  </div>
+
+                  <p>Dimensions : {p.largeur} m × {p.hauteur} m</p>
+                  <p>Prix total : {prixTotal.toFixed(2)} €</p>
+                </div>
+              </div>
+            );
+          })}
+
+          <h3 style={styles.total}>Prix total commande : {prixTotalCommande.toFixed(2)} €</h3>
+          <div style={{ textAlign: 'center' }}>
+            <button style={styles.button} onClick={passerCommande}>Passer la commande</button>
+            <button style={styles.button} onClick={() => navigate('/acceuil')}>Continuer mes achats</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

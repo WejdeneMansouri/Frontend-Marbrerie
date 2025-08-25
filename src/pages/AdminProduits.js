@@ -1,11 +1,11 @@
 import React, { useEffect, useState, useContext } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { AuthContext } from '../AuthContext'; // ✅ Ajout pour logout
+import { AuthContext } from '../AuthContext'; // ✅ pour logout et token
 
 const AdminProduits = () => {
   const navigate = useNavigate();
-  const { logout } = useContext(AuthContext); // ✅ Ajout
+  const { token, logout } = useContext(AuthContext); // ✅ récupération du token et logout
   const [produits, setProduits] = useState([]);
   const [formData, setFormData] = useState({
     nom: '',
@@ -24,7 +24,11 @@ const AdminProduits = () => {
 
   const fetchProduits = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/produits');
+      const res = await axios.get('http://localhost:5000/api/produits', {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
       setProduits(res.data);
     } catch (err) {
       console.error('Erreur de chargement des produits', err);
@@ -68,14 +72,28 @@ const AdminProduits = () => {
       }
 
       if (editingId) {
-        await axios.put(`http://localhost:5000/api/produits/${editingId}`, form, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        });
+        await axios.put(
+          `http://localhost:5000/api/produits/${editingId}`,
+          form,
+          {
+            headers: { 
+              'Content-Type': 'multipart/form-data',
+              Authorization: `Bearer ${token}` // ✅ ajout du token
+            }
+          }
+        );
         alert("✅ Produit modifié");
       } else {
-        const res = await axios.post('http://localhost:5000/api/produits', form, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        });
+        const res = await axios.post(
+          'http://localhost:5000/api/produits',
+          form,
+          {
+            headers: { 
+              'Content-Type': 'multipart/form-data',
+              Authorization: `Bearer ${token}` // ✅ ajout du token
+            }
+          }
+        );
         alert('✅ Produit ajouté');
         setProduits([...produits, res.data]);
       }
@@ -93,7 +111,11 @@ const AdminProduits = () => {
   const handleDelete = async (id) => {
     if (!window.confirm("Supprimer ce produit ?")) return;
     try {
-      await axios.delete(`http://localhost:5000/api/produits/${id}`);
+      await axios.delete(`http://localhost:5000/api/produits/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}` // ✅ ajout du token
+        }
+      });
       setProduits(produits.filter((p) => p.id !== id));
     } catch (err) {
       console.error(err);
@@ -141,7 +163,6 @@ const AdminProduits = () => {
       borderRadius: '4px',
       cursor: 'pointer',
     },
-    // ... autres styles inchangés
     form: {
       backgroundColor: '#fff',
       padding: '1.5rem',

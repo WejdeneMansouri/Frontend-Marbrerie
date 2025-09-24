@@ -6,20 +6,36 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(localStorage.getItem('token') || '');
 
+  // Charger utilisateur depuis le localStorage au démarrage
   useEffect(() => {
     if (token) {
       const storedUser = localStorage.getItem('user');
-      if (storedUser) setUser(JSON.parse(storedUser));
+      if (storedUser) {
+        try {
+          setUser(JSON.parse(storedUser));
+        } catch (e) {
+          console.error("❌ Erreur parsing user localStorage:", e);
+          localStorage.removeItem('user');
+        }
+      }
     }
   }, [token]);
 
-  function login(token, user) {
+  // Connexion → sauvegarde token + user complet
+  function login(token, userData) {
     setToken(token);
-    setUser(user);
+    setUser(userData);
     localStorage.setItem('token', token);
-    localStorage.setItem('user', JSON.stringify(user));
+    localStorage.setItem('user', JSON.stringify(userData));
   }
 
+  // Mise à jour user (utile après modification profil)
+  function updateUser(userData) {
+    setUser(userData);
+    localStorage.setItem('user', JSON.stringify(userData));
+  }
+
+  // Déconnexion → reset tout
   function logout() {
     setToken('');
     setUser(null);
@@ -28,7 +44,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout }}>
+    <AuthContext.Provider value={{ user, token, login, updateUser, logout }}>
       {children}
     </AuthContext.Provider>
   );

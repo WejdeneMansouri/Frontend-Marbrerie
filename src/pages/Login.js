@@ -33,7 +33,7 @@ export default function Login() {
 
         // 🔹 Redirection selon rôle
         if (data.user.role === 'admin') {
-          navigate('/admin/produits', { replace: true }); // admin → page admin
+          navigate('/admin/dashboard', { replace: true }); // ✅ admin → AdminDashboard
         } else {
           navigate('/', { replace: true }); // client → page home
         }

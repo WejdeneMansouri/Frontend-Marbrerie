@@ -1,3 +1,4 @@
+// src/pages/AdminCommandes.js
 import React, { useEffect, useState, useContext } from 'react';
 import axios from 'axios';
 import { AuthContext } from '../AuthContext';
@@ -35,11 +36,7 @@ const AdminCommandes = () => {
       await axios.put(
         `http://localhost:5000/api/commandes/${id}`,
         { statut: newStatut },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
 
       setCommandes(commandes.map(cmd =>
@@ -59,6 +56,20 @@ const AdminCommandes = () => {
       margin: '0 auto',
       padding: '2rem',
       fontFamily: 'Segoe UI, sans-serif'
+    },
+    topBar: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: '2rem'
+    },
+    dashboardBtn: {
+      backgroundColor: '#2563eb',
+      color: 'white',
+      padding: '0.6rem 1.2rem',
+      border: 'none',
+      borderRadius: '4px',
+      cursor: 'pointer'
     },
     card: {
       border: '1px solid #e5e7eb',
@@ -114,7 +125,15 @@ const AdminCommandes = () => {
 
   return (
     <div style={styles.container}>
-      <h2 style={styles.title}>📦 Gestion des Commandes</h2>
+      <div style={styles.topBar}>
+        <button
+          style={styles.dashboardBtn}
+          onClick={() => navigate('/admin/dashboard')}
+        >
+          ⬅️ Retour au Dashboard
+        </button>
+        <h2 style={styles.title}>📦 Gestion des Commandes</h2>
+      </div>
 
       {commandes.length === 0 ? (
         <p style={styles.noData}>🛑 Aucune commande trouvée pour le moment.</p>
@@ -148,8 +167,8 @@ const AdminCommandes = () => {
                   style={styles.select}
                 >
                   <option value="en attente">En attente</option>
-                  <option value="acceptée">Rejetée</option>
                   <option value="acceptée">Acceptée</option>
+                  <option value="rejetée">Rejetée</option>
                   <option value="préparation">Préparation</option>
                   <option value="prête">Prête</option>
                   <option value="livraison">En cours de livraison</option>
@@ -163,21 +182,20 @@ const AdminCommandes = () => {
             </div>
 
             <div style={styles.details}>
-  <h4>Détails :</h4>
-  <ul>
-    {commande.details.map((d, i) => (
-      <li key={i}>
-        {d.produit_nom} — {d.longueur_cm}×{d.largeur_cm}cm — {d.quantite} pièce(s) — Total : {d.prix_total} DT
-      </li>
-    ))}
-  </ul>
-
-  {/* ✅ Ajout du prix total de toute la commande */}
-  <p><strong>💰 Prix total de la commande :</strong> {
-  commande.details.reduce((sum, d) => sum + Number(d.prix_total), 0).toFixed(2)
-} DT</p>
-</div>
-
+              <h4>Détails :</h4>
+              <ul>
+                {commande.details.map((d, i) => (
+                  <li key={i}>
+                    {d.produit_nom} — {d.longueur_cm}×{d.largeur_cm}cm — {d.quantite} pièce(s) — Total : {d.prix_total} DT
+                  </li>
+                ))}
+              </ul>
+              <p>
+                <strong>💰 Prix total de la commande :</strong> {
+                  commande.details.reduce((sum, d) => sum + Number(d.prix_total), 0).toFixed(2)
+                } DT
+              </p>
+            </div>
           </div>
         ))
       )}
